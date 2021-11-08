@@ -6,7 +6,9 @@ export PATH=$PATH:/kaniko/
 
 REGISTRY=${PLUGIN_REGISTRY:-index.docker.io}
 
-if [ "${PLUGIN_USERNAME:-}" ] || [ "${PLUGIN_PASSWORD:-}" ]; then
+if [ "${PLUGIN_AUTHJSON_DOCKER:-}" ]; then
+    echo "${PLUGIN_AUTHJSON_DOCKER}" > /kaniko/.docker/config.json
+elif [ "${PLUGIN_USERNAME:-}" ] || [ "${PLUGIN_PASSWORD:-}" ]; then
     DOCKER_AUTH=`echo -n "${PLUGIN_USERNAME}:${PLUGIN_PASSWORD}" | base64 | tr -d "\n"`
 
     cat > /kaniko/.docker/config.json <<DOCKERJSON
@@ -20,10 +22,20 @@ if [ "${PLUGIN_USERNAME:-}" ] || [ "${PLUGIN_PASSWORD:-}" ]; then
 DOCKERJSON
 fi
 
-if [ "${PLUGIN_JSON_KEY:-}" ];then
+if [ "${PLUGIN_AUTHJSON_GCR:-}" ];then
+    echo "${PLUGIN_AUTHJSON_GCR}" > /kaniko/gcr.json
+    export GOOGLE_APPLICATION_CREDENTIALS=/kaniko/gcr.json
+elif [ "${PLUGIN_JSON_KEY:-}" ];then
+# deprecated
     echo "${PLUGIN_JSON_KEY}" > /kaniko/gcr.json
     export GOOGLE_APPLICATION_CREDENTIALS=/kaniko/gcr.json
 fi
+
+if [ "${PLUGIN_AUTHJSON_AWS:-}" ];then
+    mkdir -p ${HOME}/.aws
+    echo "${PLUGIN_AUTHJSON_AWS}" > ${HOME}/.aws/credentials
+fi
+
 
 DOCKERFILE=${PLUGIN_DOCKERFILE:-Dockerfile}
 CONTEXT=${PLUGIN_CONTEXT:-$PWD}
